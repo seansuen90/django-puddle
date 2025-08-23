@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Item
 from django.contrib.auth.decorators import login_required
@@ -16,7 +16,15 @@ def detail(request, pk):
 
 @login_required
 def new(request):
-    form = NewItemForm()
+    if request.method == 'POST':
+        form = NewItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.created_by = request.user
+            item.save()
+            return redirect('item:detail', pk=item.id)
+    else:
+        form = NewItemForm()
     return render(request, 'item/form.html', {
         'form': form,
         'title': 'New item'
